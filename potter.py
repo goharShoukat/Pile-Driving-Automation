@@ -13,13 +13,12 @@ import matplotlib.pyplot as plt
 from glob import glob
 from utilities import table_extraction, table_plotter, mkdir, editedNames, labels
 files = sorted(glob('S800/*.GWO'))
-A = [n for n in files if n.split()[2]=='A']
-B = [n for n in files if n.split()[2]=='B']
+
 #replaces file extensions and folder to extract case names
 names = [names.replace(".GWO", "") for names in files]
 names = [names.replace("S800/", "") for names in names]
-
-
+A = [n for n in names if n.split()[2]=='A']
+B = [n for n in names if n.split()[2]=='B']
 # %% read data from the text files
 output = 'Results/'
 output_csv = output + 'Reformatted-S800/'
@@ -28,6 +27,8 @@ mkdir(output_csv)
 output_tables = output + 'Tables-S800/'
 mkdir(output_tables)
 
+#put all the data from the 12 files in one dict
+d = {} #d will house all the data
 
 for i in range(len(files)):
     with open(files[i], 'r') as f:
@@ -58,14 +59,14 @@ for i in range(len(files)):
     units = data[1].split()
     #initialize array depending on size of input data
     #13 columns remain fixed. number of rows will change. 
-    rows = np.zeros((len(data)-1, len(columns)), dtype=object)
+    rows = np.zeros((len(data), len(columns)), dtype=object)
     rows[0, :] = units 
 
 
 #go line by line and extract the values in each row after using split()
 
     for j in range(2, len(data)):
-        if len(data[j].split()) == 8:
+        if len(data[j].split()) == 8:#some rows have two columns combined into 1. this detects those rows and performs necessary operations to exxtract and place the values in to each column
             s = data[j].split()[5] #extreact the 5th element with the joint string
             index = s.find('-') #identify index of minus
             x = s[:index] #extract value of left of -
@@ -73,16 +74,23 @@ for i in range(len(files)):
             row_val = (data[j].split()) #before filling in the row, create a new variable to adjust and shift valuees
             row_val[5] = x
             row_val.insert(6, y)
-            rows[j-1, :] = row_val
+            rows[j, :] = row_val
             
         else: 
-            rows[j-1, :] = data[j].split()
+            rows[j, :] = data[j].split()
 
 
 #write files to txt
     df = pd.DataFrame(data = rows, columns = columns)
     df.to_csv(output_csv + names[i] + '.txt', sep='\t', mode='a', index=False)
+    df.to_csv(output_csv + names[i] + '.csv', index=False)
+    
+    #reformat df for use in the plotting functions below
+    df2 = df.set_index('Depth')
+    df2 = df2.iloc[1:]
+    df2['Bl Ct'] = df2['Bl Ct'].astype(float) / 4 #convert datatype frm string to float. divide by 4 to get /25cm value
 
+    d[names[i]] = df2
     
 #generate tables for 
     path = output_tables + names[i] + '/'
@@ -184,15 +192,37 @@ else:
 #create relational lists. map filenames, to gra and grb
 #first do it for A
 
-gra, grb = editedNames(names)
-gr = gra + grb
-lab = labels(gr)  #reformat labels to the desired format
+gra = editedNames(A, 'A')
+lab = labels(gra)  #reformat labels to the desired format
 #create relational dictionary
-dict(zip(files, lab)) 
 
-df2 = df.set_index('Depth')
-df2 = df2.iloc[1:]
-df2['Bl Ct'] = df2['Bl Ct'].astype(float) / 4 #convert datatype frm string to float. divide by 4 to get /25cm value
+#plot only for non-api files
+non_api = [l for l in lab if 'API' not in l]
+api = 
+        
+mapping = dict(zip(names, non_api)) 
+
+fig, ax = plt.subplots(figsize = (5, 20))
+ax.set_xlabel(r'Blow Count (Blows/25cm)')
+ax.set_ylabel(r'Depth (m)')
+#x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
+y = np.arange(0, 100, 5)
+#ax.set_yticks(y)
+##ax.set_xticks(x)
+ax.invert_yaxis()
+ax.xaxis.set_label_position('top')
+ax.xaxis.tick_top()
+ax.grid()
+
+
+
+for k in mapping:
+    ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping[k])  
+
+
+ax.legend(ncol = 2)
+plt.show()
+
 
 fig, ax = plt.subplots(figsize = (5, 20))
 ax.plot(df2['Bl Ct'], df2.index, linewidth = 1, alpha = 0.5, label = names[1])

@@ -69,17 +69,16 @@ def table_plotter(df, filename):
         dfi.export(df, filename + '.png')
 
 
-def editedNames(names):
+def editedNames(names, group):
     #Input
     #names : list of list : takes the list of names
     #edits them to make the labels like the zawtika file
     
     gra = []
-    grb = []
-    j = 0
+
     for i, n in enumerate(names):
         n = n.replace('14 GR', '')
-        if n.split()[0] == 'A':
+        if n.split()[0] == group:
             
             gra.append(n)
             
@@ -97,22 +96,8 @@ def editedNames(names):
             
             
         #create a seperate group for group b results
-        elif n.split()[0] == 'B':
-            grb.append(n)
-            grb[j] = grb[j].split()
-            
-    
-            #change 'S-xxx' to 'xxxS'
-            grb[j][-2] = grb[j][-2].replace('S-', "")
-            grb[j][-2] = grb[j][-2].replace(grb[j][-2], grb[j][-2] + 'S')
-            
-            #change E=xx to xx%
-            grb[j][-1] = grb[j][-1].replace('E=', "")
-            grb[j][-1] = grb[j][-1].replace(grb[j][-1], grb[j][-1] + '%')
-            
-            j = j + 1
-        
-    return gra, grb
+       
+    return gra
 
 def labels(lst):
     #Input
