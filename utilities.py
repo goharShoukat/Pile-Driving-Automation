@@ -8,6 +8,9 @@ Created on Tue Jul  5 12:07:05 2022
 import os
 import dataframe_image as dfi
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from glob import glob
 def list_search(data, search):
     #function to search and return the index for which a keyword is seen in the file. 
     
@@ -108,4 +111,214 @@ def labels(lst):
         lab.append('{} {} {}'.format(l[-2], l[-3], l[-1]))
         
     return lab
+
+
+def plots(d, mapping, folder, title, group):
+    #Input
+    #d : {} : dictionary of dataframes from all the datafiles
+    #mapping : {} : dictionary mapping the filenames with the ones that are specific to the files that will be plotted
+    #title : str : S800 or S1200 depending or S800-S1200 API
+    #group : str : A or B
+    fig, ax = plt.subplots(figsize = (5, 20))
+    ax.set_xlabel(r'Blow Count (Blows/25cm)')
+    ax.set_ylabel(r'Depth (mBGL)')
+    #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
+    y = np.arange(0, 100, 10)
+    ax.set_yticks(y)
+    ##ax.set_xticks(x)
+    ax.invert_yaxis()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.grid()
     
+    
+    
+    for k in mapping:
+        ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping[k])  
+    
+    ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
+    plt.show()
+    plt.savefig(folder + '/' + title + ' ' + group + '.pdf')
+
+def combine_api_data(cache800, cache1200):
+    #function takes in the datafiles from the two hammer type and 
+    #returns the combined set for plotting further
+    mapped = cache800
+    for d, ka, kb in zip(cache1200['d'], cache1200['mapping_api_A'], cache1200['mapping_api_B']):
+        mapped['d'][d] = cache1200['d'][d] 
+        mapped['mapping_api_A'][ka] = cache1200['mapping_api_A'][ka]
+        mapped['mapping_api_B'][kb] = cache1200['mapping_api_B'][kb]
+
+    return mapped
+
+def plots_api(d, mapping, folder, group, confidence_limit = 100, api_limit = 250):
+    #function to plot the api files
+    #d : {} : dictionary of dataframes from all the datafiles
+    #mapping : {} : dictionary mapping the filenames with the ones that are specific to the files that will be plotted
+    #title : str : S800 or S1200 depending or S800-S1200 API
+    #group : str : A or B      
+    #confidence limit : float : user defined
+    #api_limit : float : user defined
+    plot_folder = folder + '/plots'
+    fig, ax = plt.subplots(figsize = (5, 20))
+    ax.set_xlabel(r'Blow Count (Blows/25cm)')
+    ax.set_ylabel(r'Depth (mBGL)')
+    #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
+    y = np.arange(0, 100, 10)
+    ax.set_yticks(y)
+    ##ax.set_xticks(x)
+    ax.invert_yaxis()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.grid()
+
+    for k in mapping:
+        ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping[k])  
+    
+
+    ax.axvline(confidence_limit, label = 'Confidence Limit', ls = '--', color = 'red')    
+    ax.axvline(api_limit, label = 'API Limit', ls = '--', color = 'Blue')    
+    ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
+    plt.show()
+    plt.savefig(plot_folder + '/' + 'API ' + group + '.pdf')
+    
+    
+def post_processor_gwo(input_folder, hammer_type, output):
+    #function that takes input directory
+    #Input
+    #input_folder : str : directory for input filetypes
+    #hammer_type : str : S800 or S1200
+    #group : str : A or B
+    #outputs
+    #d {} : dictionary with all the relevant filenames
+    #mapped_api : relevant api file names for plots
+    #mapped_na : non api mapped names for plots
+    files = sorted(glob(input_folder + '/*.GWO'))
+        
+    #replaces file extensions and folder to extract case names
+    names = [names.replace(".GWO", "") for names in files]
+    names = [names.replace("{}/".format(hammer_type), "") for names in names]
+    A = [n for n in names if n.split()[2]=='A']
+    B = [n for n in names if n.split()[2]=='B']
+    
+    
+
+    output_csv = output + 'Reformatted-{}/'.format(hammer_type) 
+    mkdir(output_csv)
+
+    output_tables = output + 'Tables-{}/'.format(hammer_type)
+    mkdir(output_tables)
+
+    #put all the data from the 12 files in one dict
+    d = {} #d will house all the data
+
+    for i in range(len(files)):
+        with open(files[i], 'r') as f:
+            lines = f.readlines()
+
+        #search for the summary table. 
+        #although format remains consistent throughout files
+        #it is better to be err on the side of caution. 
+        #each file will be searched for the data table. 
+
+        data = table_extraction(lines)
+
+        
+        #column names need to be readjusted after split operation. some columns
+        #have a psace in their names
+        columns = data[0].split()
+        columns[3] = 'End Bg'
+        columns.pop(4)
+        columns[4] = 'Bl Ct'
+        columns.pop(5)
+        columns[5] = 'Com Str'
+        columns.pop(6)
+        columns[6] = 'Ten Str'
+        columns.pop(7)
+        
+        
+            
+        units = data[1].split()
+        #initialize array depending on size of input data
+        #13 columns remain fixed. number of rows will change. 
+        rows = np.zeros((len(data), len(columns)), dtype=object)
+        rows[0, :] = units 
+
+
+    #go line by line and extract the values in each row after using split()
+
+        for j in range(2, len(data)):
+            if len(data[j].split()) == 8:#some rows have two columns combined into 1. this detects those rows and performs necessary operations to exxtract and place the values in to each column
+                s = data[j].split()[5] #extreact the 5th element with the joint string
+                index = s.find('-') #identify index of minus
+                x = s[:index] #extract value of left of -
+                y = s[index:] #extract value right of minus with a - sign
+                row_val = (data[j].split()) #before filling in the row, create a new variable to adjust and shift valuees
+                row_val[5] = x
+                row_val.insert(6, y)
+                rows[j, :] = row_val
+                
+            else: 
+                rows[j, :] = data[j].split()
+
+
+    #write files to txt
+        df = pd.DataFrame(data = rows, columns = columns)
+        df.to_csv(output_csv + names[i] + '.txt', sep='\t', mode='a', index=False)
+        df.to_csv(output_csv + names[i] + '.csv', index=False)
+        
+        #reformat df for use in the plotting functions below
+        df2 = df.set_index('Depth')
+        df2 = df2.iloc[1:]
+        df2['Bl Ct'] = df2['Bl Ct'].astype(float) / 4 #convert datatype frm string to float. divide by 4 to get /25cm value
+
+        d[names[i]] = df2
+        
+    #generate tables for 
+        path = output_tables + names[i] + '/'
+        table_plotter(df2, path)
+      
+    
+# =============================================================================
+#     Creeate segregation for plotting functions here
+#     followint part needs clean up. short on time so some other itme
+# =============================================================================
+    plot_folder = output+'plots/'
+    mkdir(plot_folder)
+    
+    #for A
+    gra = editedNames(A, 'A')
+    lab = labels(gra)  #reformat labels to the desired format
+    #create relational dictionary
+    
+    #plot only for non-api files
+    non_api = [l for l in lab if 'API' not in l]
+    api = [l for l in lab if 'API' in l]
+            
+    mapping_na = dict(zip(names, non_api)) 
+    mapping_api_A = dict(zip(names, api))
+    
+    #plotting folder
+    
+    plots(d, mapping_na, plot_folder, hammer_type, 'A')
+    
+    
+    #for B
+    
+    grb = editedNames(B, 'B')
+    lab = labels(grb)  #reformat labels to the desired format
+    #create relational dictionary
+    
+    #plot only for non-api filess
+    non_api = [l for l in lab if 'API' not in l]
+    api = [l for l in lab if 'API' in l]
+            
+    mapping_na = dict(zip(names, non_api)) 
+    mapping_api_B = dict(zip(names, api))
+    
+    plots(d, mapping_na, plot_folder, hammer_type, 'B')
+    
+
+    #plots(d, mapping_api, 'S-800')
+    return {'d' : d, 'mapping_api_A' : mapping_api_A,
+            'mapping_api_B' : mapping_api_B}

@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from glob import glob
-from utilities import table_extraction, table_plotter, mkdir, editedNames, labels
+from utilities import table_plotter, mkdir, editedNames, labels, table_extraction, plots
+
 files = sorted(glob('S800/*.GWO'))
 
 #replaces file extensions and folder to extract case names
@@ -21,7 +22,7 @@ A = [n for n in names if n.split()[2]=='A']
 B = [n for n in names if n.split()[2]=='B']
 # %% read data from the text files
 output = 'Results/'
-output_csv = output + 'Reformatted-S800/'
+output_csv = output + 'Reformatted-S1200/'
 mkdir(output_csv)
 
 output_tables = output + 'Tables-S800/'
@@ -96,6 +97,25 @@ for i in range(len(files)):
     path = output_tables + names[i] + '/'
     table_plotter(df, path)
     
+
+# Code for plotting
+
+gra = editedNames(A, 'A')
+lab = labels(gra)  #reformat labels to the desired format
+#create relational dictionary
+
+#plot only for non-api files
+non_api = [l for l in lab if 'API' not in l]
+api = [l for l in lab if 'API' in l]
+        
+mapping_na = dict(zip(names, non_api)) 
+mapping_api = dict(zip(names, api))
+
+#plotting folder
+plot_folder = 'Results/plots/'
+mkdir(plot_folder)
+plots(d, mapping_na, plot_folder, 'S-800')
+plots(d, mapping_api, 'S-800')
     
 # =============================================================================
 #     
@@ -198,16 +218,18 @@ lab = labels(gra)  #reformat labels to the desired format
 
 #plot only for non-api files
 non_api = [l for l in lab if 'API' not in l]
-api = 
+api = [l for l in lab if 'API' in l]
         
-mapping = dict(zip(names, non_api)) 
+mapping_na = dict(zip(names, non_api)) 
+mapping_api = dict(zip(names, api))
+
 
 fig, ax = plt.subplots(figsize = (5, 20))
 ax.set_xlabel(r'Blow Count (Blows/25cm)')
-ax.set_ylabel(r'Depth (m)')
+ax.set_ylabel(r'Depth (mBGL)')
 #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
-y = np.arange(0, 100, 5)
-#ax.set_yticks(y)
+y = np.arange(0, 100, 10)
+ax.set_yticks(y)
 ##ax.set_xticks(x)
 ax.invert_yaxis()
 ax.xaxis.set_label_position('top')
@@ -216,27 +238,9 @@ ax.grid()
 
 
 
-for k in mapping:
-    ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping[k])  
+for k in mapping_na:
+    ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping_na[k])  
 
 
 ax.legend(ncol = 2)
-plt.show()
-
-
-fig, ax = plt.subplots(figsize = (5, 20))
-ax.plot(df2['Bl Ct'], df2.index, linewidth = 1, alpha = 0.5, label = names[1])
-
-ax.set_xlabel(r'Blow Count (Blows/25cm)')
-ax.set_ylabel(r'Depth (m)')
-x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
-y = np.arange(0, 100, 5)
-ax.set_xticks(x)
-ax.set_yticks(y)
-ax.invert_yaxis()
-ax.xaxis.set_label_position('top')
-ax.xaxis.tick_top()
-ax.grid()
-ax.legend(loc='upper center',
-        ncol=6)
 plt.show()
