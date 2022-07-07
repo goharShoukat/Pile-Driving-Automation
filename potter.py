@@ -30,9 +30,7 @@ mkdir(output_tables)
 
 #put all the data from the 12 files in one dict
 d = {} #d will house all the data
-max_ct = pd.DataFrame(index=(np.linspace(1, 13, 13).astype(int)), columns = (['Max Bl Ct', 'Depth']))
-max_bl_ct = [] #contains information on the maximum blow count per file
-exceedence = [] #contains information on what depth and the value when the api limit was exceeded
+max_ct = pd.DataFrame(index=(np.linspace(1, 12, 12).astype(int)), columns = (['Names', 'Max Bl Ct', 'Depth']), dtype = object)
 
 for i in range(len(files)):
     with open(files[i], 'r') as f:
@@ -86,8 +84,8 @@ for i in range(len(files)):
 
 #write files to txt
     df = pd.DataFrame(data = rows, columns = columns)
-    df.to_csv(output_csv + names[i] + '.txt', sep='\t', mode='a', index=False)
-    df.to_csv(output_csv + names[i] + '.csv', index=False)
+    #df.to_csv(output_csv + names[i] + '.txt', sep='\t', mode='a', index=False)
+    #df.to_csv(output_csv + names[i] + '.csv', index=False)
     
     #reformat df for use in the plotting functions below
     df2 = df.set_index('Depth')
@@ -98,9 +96,10 @@ for i in range(len(files)):
     
 #generate tables for 
     path = output_tables + names[i] + '/'
-    table_plotter(df, path)
-    
-
+    #table_plotter(df, path)
+    max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])].index[0])
+    max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'][0]
+    max_ct.iloc[i]['Names'] = names[i]
 # Code for plotting
 
 gra = editedNames(A, 'A')
@@ -225,15 +224,11 @@ else:
 
 gra = editedNames(A, 'A')
 lab = labels(gra)  #reformat labels to the desired format
-#create relational dictionary
 
-#plot only for non-api files
-non_api = [l for l in lab if 'API' not in l]
-api = [l for l in lab if 'API' in l]
-        
-mapping_na = dict(zip(names, non_api)) 
-mapping_api = dict(zip(names, api))
 
+#extract non-api files
+non_api = [k for k in names[:6] if 'API' not in k]
+api = [k for k in names[:6] if 'API' in k]
 
 fig, ax = plt.subplots(figsize = (5, 20))
 ax.set_xlabel(r'Blow Count (Blows/25cm)')
@@ -249,9 +244,10 @@ ax.grid()
 
 
 
-for k in mapping_na:
-    ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping_na[k])  
+for k in non_api:
+    ax.plot(d[k]['Bl Ct'],d[k].index.astype(float), linewidth = 1, alpha = 0.5, label = k)  
 
-
-ax.legend(ncol = 2)
+ax.axvline(100, label = 'Confidence Limit', ls = '--', color = 'red')    
+ax.axvline(250, label = 'API Limit', ls = '--', color = 'Blue')    
+ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
 plt.show()

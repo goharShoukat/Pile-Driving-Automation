@@ -148,14 +148,12 @@ def combine_api_data(cache800, cache1200):
     #function takes in the datafiles from the two hammer type and 
     #returns the combined set for plotting further
     mapped = cache800
-    for d, ka, kb in zip(cache1200['d'], cache1200['mapping_api_A'], cache1200['mapping_api_B']):
+    for d in cache1200['d']:
         mapped['d'][d] = cache1200['d'][d] 
-        mapped['mapping_api_A'][ka] = cache1200['mapping_api_A'][ka]
-        mapped['mapping_api_B'][kb] = cache1200['mapping_api_B'][kb]
 
     return mapped
 
-def plots_api(d, mapping, folder, group, confidence_limit = 100, api_limit = 250):
+def plots_api(d, names, folder, group, lab, confidence_limit = 100, api_limit = 250):
     #function to plot the api files
     #d : {} : dictionary of dataframes from all the datafiles
     #mapping : {} : dictionary mapping the filenames with the ones that are specific to the files that will be plotted
@@ -176,8 +174,10 @@ def plots_api(d, mapping, folder, group, confidence_limit = 100, api_limit = 250
     ax.xaxis.tick_top()
     ax.grid()
 
-    for k in mapping:
-        ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5)  
+    i = 0
+    for k in names:
+        ax.plot(d[k]['Bl Ct'],d[k].index.astype(float), linewidth = 1, alpha = 0.5, label = lab[i])
+        i = i + 1
     
 
     ax.axvline(confidence_limit, label = 'Confidence Limit', ls = '--', color = 'red')    
@@ -283,3 +283,54 @@ def post_processor_gwo(input_folder, hammer_type, output):
      
     
     return {'d' : d, 'names' : names}
+
+
+def graphs(cache800, cache1200, output):
+        
+    
+    non_api_800A = [k for k in cache800['names'][:6] if 'API' not in k]
+    gra = editedNames(non_api_800A, 'A')
+    lab = labels(gra)  #reformat labels to the desired format
+    plots(cache800['d'], non_api_800A, output, 'S800', 'A', lab)
+    
+    
+    non_api_800B = [k for k in cache800['names'][6:] if 'API' not in k]
+    grb = editedNames(non_api_800B, 'B')
+    lab = labels(grb)  #reformat labels to the desired format
+    plots(cache800['d'], non_api_800B, output, 'S800', 'B', lab)
+    
+    
+    
+    non_api_1200A = [k for k in cache1200['names'][:6] if 'API' not in k]
+    gra = editedNames(non_api_1200A, 'A')
+    lab = labels(gra)  #reformat labels to the desired format
+    plots(cache1200['d'], non_api_1200A, output, 'S1200', 'A', lab)
+    
+    
+    non_api_1200B = [k for k in cache1200['names'][6:] if 'API' not in k]
+    grb = editedNames(non_api_1200B, 'B')
+    lab = labels(grb)  #reformat labels to the desired format
+    plots(cache1200['d'], non_api_1200B, output, 'S1200', 'B', lab)
+    
+    
+    #plot api values fro group A
+    api800A = [k for k in cache800['names'][:6] if 'API' in k]
+    api1200A = [k for k in cache1200['names'][:6] if 'API' in k]
+    apiA = api800A + api1200A
+    gra = editedNames(apiA, 'A')
+    lab = labels(gra)  #reformat labels to the desired format
+    combined_d_A = combine_api_data(cache800, cache1200)
+    
+    plots_api(combined_d_A['d'], apiA, output, 'A', lab)
+    
+    
+    
+    #plot api values fro group B
+    api800B = [k for k in cache800['names'][6:] if 'API' in k]
+    api1200B = [k for k in cache1200['names'][6:] if 'API' in k]
+    apiB = api800B + api1200B
+    grb = editedNames(apiB, 'B')
+    lab = labels(grb)  #reformat labels to the desired format
+    combined_d_B = combine_api_data(cache800, cache1200)
+    
+    plots_api(combined_d_B['d'], apiB, output, 'B', lab)
