@@ -113,12 +113,14 @@ def labels(lst):
     return lab
 
 
-def plots(d, mapping, folder, title, group):
+def plots(d, names, folder, title, group, lab):
     #Input
     #d : {} : dictionary of dataframes from all the datafiles
     #mapping : {} : dictionary mapping the filenames with the ones that are specific to the files that will be plotted
     #title : str : S800 or S1200 depending or S800-S1200 API
     #group : str : A or B
+    output = folder + '/plots' 
+    mkdir(output)    
     fig, ax = plt.subplots(figsize = (5, 20))
     ax.set_xlabel(r'Blow Count (Blows/25cm)')
     ax.set_ylabel(r'Depth (mBGL)')
@@ -132,13 +134,15 @@ def plots(d, mapping, folder, title, group):
     ax.grid()
     
     
+    i = 0
+    for k in names:
+        ax.plot(d[k]['Bl Ct'],d[k].index.astype(float), linewidth = 1, alpha = 0.5, label = lab[i])
+        i = i + 1
     
-    for k in mapping:
-        ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping[k])  
     
     ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
     plt.show()
-    plt.savefig(folder + '/' + title + ' ' + group + '.pdf')
+    plt.savefig(output + '/' + title + ' ' + group + '.pdf')
 
 def combine_api_data(cache800, cache1200):
     #function takes in the datafiles from the two hammer type and 
@@ -173,7 +177,7 @@ def plots_api(d, mapping, folder, group, confidence_limit = 100, api_limit = 250
     ax.grid()
 
     for k in mapping:
-        ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5, label = mapping[k])  
+        ax.plot(d[k]['Bl Ct'],d[k].index, linewidth = 1, alpha = 0.5)  
     
 
     ax.axvline(confidence_limit, label = 'Confidence Limit', ls = '--', color = 'red')    
@@ -211,7 +215,6 @@ def post_processor_gwo(input_folder, hammer_type, output):
 
     #put all the data from the 12 files in one dict
     d = {} #d will house all the data
-
     for i in range(len(files)):
         with open(files[i], 'r') as f:
             lines = f.readlines()
@@ -276,49 +279,7 @@ def post_processor_gwo(input_folder, hammer_type, output):
         
     #generate tables for 
         path = output_tables + names[i] + '/'
-        table_plotter(df2, path)
-      
+        #table_plotter(df2, path)
+     
     
-# =============================================================================
-#     Creeate segregation for plotting functions here
-#     followint part needs clean up. short on time so some other itme
-# =============================================================================
-    plot_folder = output+'plots/'
-    mkdir(plot_folder)
-    
-    #for A
-    gra = editedNames(A, 'A')
-    lab = labels(gra)  #reformat labels to the desired format
-    #create relational dictionary
-    
-    #plot only for non-api files
-    non_api = [l for l in lab if 'API' not in l]
-    api = [l for l in lab if 'API' in l]
-            
-    mapping_na = dict(zip(names, non_api)) 
-    mapping_api_A = dict(zip(names, api))
-    
-    #plotting folder
-    
-    plots(d, mapping_na, plot_folder, hammer_type, 'A')
-    
-    
-    #for B
-    
-    grb = editedNames(B, 'B')
-    lab = labels(grb)  #reformat labels to the desired format
-    #create relational dictionary
-    
-    #plot only for non-api filess
-    non_api = [l for l in lab if 'API' not in l]
-    api = [l for l in lab if 'API' in l]
-            
-    mapping_na = dict(zip(names, non_api)) 
-    mapping_api_B = dict(zip(names, api))
-    
-    plots(d, mapping_na, plot_folder, hammer_type, 'B')
-    
-
-    #plots(d, mapping_api, 'S-800')
-    return {'d' : d, 'mapping_api_A' : mapping_api_A,
-            'mapping_api_B' : mapping_api_B}
+    return {'d' : d, 'names' : names}

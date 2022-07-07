@@ -30,6 +30,9 @@ mkdir(output_tables)
 
 #put all the data from the 12 files in one dict
 d = {} #d will house all the data
+max_ct = pd.DataFrame(index=(np.linspace(1, 13, 13).astype(int)), columns = (['Max Bl Ct', 'Depth']))
+max_bl_ct = [] #contains information on the maximum blow count per file
+exceedence = [] #contains information on what depth and the value when the api limit was exceeded
 
 for i in range(len(files)):
     with open(files[i], 'r') as f:
@@ -173,10 +176,18 @@ for i in range(2, len(data)):
     else: 
         rows[i-1, :] = data[i].split()
         
-df = pd.DataFrame(data = rows, columns = columns)
-df.to_csv('GWO.txt', sep='\t', mode='a', index=False)
 
-test = pd.read_csv('GWO.txt', delimiter='\t')
+df = pd.DataFrame(data = rows, columns = columns)
+df2 = df.set_index('Depth')
+df2 = df2.iloc[1:]
+df2['Bl Ct'] = df2['Bl Ct'].astype(float) / 4 #convert datatype frm string to float. divide by 4 to get /25cm value
+df2[df2['Bl Ct']>30]['Bl Ct'][0]
+df2[df2['Bl Ct']>30].index[0]
+
+
+#df.to_csv('GWO.txt', sep='\t', mode='a', index=False)
+
+#test = pd.read_csv('GWO.txt', delimiter='\t')
 
 
 # %% table plotter 
