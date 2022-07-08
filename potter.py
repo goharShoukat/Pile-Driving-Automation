@@ -31,6 +31,7 @@ mkdir(output_tables)
 #put all the data from the 12 files in one dict
 d = {} #d will house all the data
 max_ct = pd.DataFrame(index=(np.linspace(1, 12, 12).astype(int)), columns = (['Names', 'Max Bl Ct', 'Depth']), dtype = object)
+refusal = pd.DataFrame(index=(np.linspace(1, 12, 12).astype(int)), columns = (['Names', 'Depth']), dtype = object)
 
 for i in range(len(files)):
     with open(files[i], 'r') as f:
@@ -100,6 +101,10 @@ for i in range(len(files)):
     max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])].index[0])
     max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'][0]
     max_ct.iloc[i]['Names'] = names[i]
+    refusal.iloc[i]['Names'] = names[i]
+    if len(df2[df2['Bl Ct'] > 250].index) > 0: 
+        refusal.iloc[i]['Depth'] =  (df2[df2['Bl Ct'] > 250].index[0])
+    else: refusal.iloc[i]['Depth'] =  np.nan
 # Code for plotting
 
 gra = editedNames(A, 'A')

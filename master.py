@@ -31,4 +31,4 @@ cache800  = post_processor_gwo(s800_folder, 'S800', output)
 cache1200 = post_processor_gwo(s1200_folder, 'S1200', output)
 
 
-graphs(cache800, cache1200, output)
+graphs(cache800, cache1200, output, confidence_limit = 100, api_limit = 250)

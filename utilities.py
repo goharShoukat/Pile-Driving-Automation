@@ -215,6 +215,9 @@ def post_processor_gwo(input_folder, hammer_type, output):
 
     #put all the data from the 12 files in one dict
     d = {} #d will house all the data
+    max_ct = pd.DataFrame(index=(np.linspace(1, 12, 12).astype(int)), columns = (['Names', 'Max Bl Ct', 'Depth']), dtype = object)
+    refusal = pd.DataFrame(index=(np.linspace(1, 12, 12).astype(int)), columns = (['Names', 'Depth']), dtype = object)
+
     for i in range(len(files)):
         with open(files[i], 'r') as f:
             lines = f.readlines()
@@ -279,13 +282,21 @@ def post_processor_gwo(input_folder, hammer_type, output):
         
     #generate tables for 
         path = output_tables + names[i] + '/'
-        #table_plotter(df2, path)
-     
-    
+        table_plotter(df2, path)
+        max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])].index[0])
+        max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'][0]
+        max_ct.iloc[i]['Names'] = names[i]
+        refusal.iloc[i]['Names'] = names[i]
+        if len(df2[df2['Bl Ct'] > 250].index) > 0: 
+            refusal.iloc[i]['Depth'] =  (df2[df2['Bl Ct'] > 250].index[0])
+        else: refusal.iloc[i]['Depth'] =  np.nan
+    # Co
+    max_ct.to_csv(output_csv + 'max blow count.csv')
+    refusal.to_csv(output_csv + 'refusal depth.csv')
     return {'d' : d, 'names' : names}
 
 
-def graphs(cache800, cache1200, output):
+def graphs(cache800, cache1200, output, confidence_limit = 100, api_limit = 250):
         
     
     non_api_800A = [k for k in cache800['names'][:6] if 'API' not in k]
@@ -321,7 +332,8 @@ def graphs(cache800, cache1200, output):
     lab = labels(gra)  #reformat labels to the desired format
     combined_d_A = combine_api_data(cache800, cache1200)
     
-    plots_api(combined_d_A['d'], apiA, output, 'A', lab)
+    plots_api(combined_d_A['d'], apiA, output, 'A', lab, confidence_limit=confidence_limit, 
+              api_limit=api_limit)
     
     
     
@@ -333,4 +345,5 @@ def graphs(cache800, cache1200, output):
     lab = labels(grb)  #reformat labels to the desired format
     combined_d_B = combine_api_data(cache800, cache1200)
     
-    plots_api(combined_d_B['d'], apiB, output, 'B', lab)
+    plots_api(combined_d_B['d'], apiB, output, 'B', lab, confidence_limit=confidence_limit, 
+              api_limit=api_limit)
