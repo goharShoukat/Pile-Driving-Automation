@@ -187,7 +187,7 @@ def plots_api(d, names, folder, group, lab, confidence_limit = 100, api_limit = 
     plt.savefig(plot_folder + '/' + 'API ' + group + '.pdf')
     
     
-def post_processor_gwo(input_folder, hammer_type, output):
+def post_processor_gwo(input_folder, output):
     #function that takes input directory
     #Input
     #input_folder : str : directory for input filetypes
@@ -201,16 +201,16 @@ def post_processor_gwo(input_folder, hammer_type, output):
         
     #replaces file extensions and folder to extract case names
     names = [names.replace(".GWO", "") for names in files]
-    names = [names.replace("{}/".format(hammer_type), "") for names in names]
+    names = [names.replace("{}/".format(input_folder), "") for names in names]
     A = [n for n in names if n.split()[2]=='A']
     B = [n for n in names if n.split()[2]=='B']
     
     
 
-    output_csv = output + 'Reformatted-{}/'.format(hammer_type) 
+    output_csv = output + 'Reformatted-{}/'.format(input_folder) 
     mkdir(output_csv)
 
-    output_tables = output + 'Tables-{}/'.format(hammer_type)
+    output_tables = output + 'Tables-{}/'.format(input_folder)
     mkdir(output_tables)
 
     #put all the data from the 12 files in one dict

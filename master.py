@@ -19,7 +19,7 @@ from utilities import post_processor_gwo,graphs
 #likewise on S1200
 
 #the folder needs to hold both A type and B type files
-s800_folder = 'S800' 
+s800_folder = 'S-800' 
 s1200_folder = 'S1200' 
 
 #results folder with 
@@ -27,8 +27,8 @@ output = 'Results/'
 
 #file cleaning, data extraction and plotting of non-api files
 # do not edit
-cache800  = post_processor_gwo(s800_folder, 'S800', output)
-cache1200 = post_processor_gwo(s1200_folder, 'S1200', output)
+cache800  = post_processor_gwo(s800_folder, output)
+cache1200 = post_processor_gwo(s1200_folder, output)
 
 
 graphs(cache800, cache1200, output, confidence_limit = 100, api_limit = 250)
