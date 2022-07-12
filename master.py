@@ -19,11 +19,11 @@ from utilities import post_processor_gwo,graphs
 #likewise on S1200
 
 #the folder needs to hold both A type and B type files
-s800_folder = 'S-800' 
-s1200_folder = 'S1200' 
+s800_folder = '14/S800' 
+s1200_folder = '14/S1200' 
 
 #results folder with 
-output = 'Results/'
+output = '14/Results/'
 
 #file cleaning, data extraction and plotting of non-api files
 # do not edit

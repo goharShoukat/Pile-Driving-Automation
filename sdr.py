@@ -14,7 +14,7 @@ import numpy as np
 from utilities import mkdir
 df = pd.read_excel('sdr_input.xlsx')
 
-folder = 'Results'
+folder = '14/Results'
 output = folder + '/plots' 
 mkdir(output)    
 
@@ -27,10 +27,7 @@ ax.set_ylabel(r'Depth (mBGL)')
 #y = np.arange(0, 100, 10)
 #ax.set_yticks(y)
 ##ax.set_xticks(x)
-ax.invert_yaxis()
-ax.xaxis.set_label_position('top')
-ax.xaxis.tick_top()
-ax.grid()
+
 
 # =============================================================================
 # for k in df.columns[1:]:
@@ -39,10 +36,16 @@ ax.grid()
 # =============================================================================
 ax.plot(df['Best Estimate A&H'], df['Depth'], linewidth = 1, alpha = 0.5, label = 'Best Estimate A&H')
 ax.plot(df['Max Estimate API'], df['Depth'], linewidth = 1, alpha = 0.5, label = 'Max Estimate API')
-ax.plot(df['API SRD'], df['Depth'], linewidth = 1, alpha = 0.5, label = 'API SRD')
+ax.plot(df['API SRD'], df['API DEPTHS'], linewidth = 1, alpha = 0.5, label = 'API SRD')
 ax.plot(df['IHC S1200 + Ballast + Pile'], df['Depth'], linewidth = 1, alpha = 0.5, label = 'IHC S1200 + Ballast + Pile', ls = '--')
 ax.plot(df['IHC S800 + Ballast + Pile'], df['Depth'], linewidth = 1, alpha = 0.5, label = 'IHC S800 + Ballast + Pile', ls = '--')
 ax.plot(df['Pile Only Weight'], df['Depth'], linewidth = 1, alpha = 0.5, label = 'Pile Only Weight', ls = '--')
+ax.set_xlim(left = 0)
+ax.set_ylim(bottom = 0)
+ax.invert_yaxis()
+ax.xaxis.set_label_position('top')
+ax.xaxis.tick_top()
+ax.grid()
 ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
 plt.show()
 plt.savefig(output + '/'  + 'SRD.pdf')

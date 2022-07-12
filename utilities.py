@@ -64,12 +64,13 @@ def table_plotter(df, filename):
     pd.set_option('display.max_rows', None)
     if len(df) / 40 > 1:
         times = int(len(df) / 40) + 1 #determines number of images the df has to be broken down into
-                                 #+1 take cares of the leftover values
+                                  #+1 take cares of the leftover values
         
         for i in range((times)):
             dfi.export(df.iloc[(40*i):(40 + 40 * i)], path  + '{}.png'.format(i))
     else:
         dfi.export(df, filename + '.png')
+
 
 
 def editedNames(names, group):
@@ -125,13 +126,11 @@ def plots(d, names, folder, title, group, lab):
     ax.set_xlabel(r'Blow Count (Blows/25cm)')
     ax.set_ylabel(r'Depth (mBGL)')
     #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
-    y = np.arange(0, 100, 10)
-    ax.set_yticks(y)
+    #y = np.arange(0, 100, 10)
+    
+    #ax.set_yticks(y)
     ##ax.set_xticks(x)
-    ax.invert_yaxis()
-    ax.xaxis.set_label_position('top')
-    ax.xaxis.tick_top()
-    ax.grid()
+
     
     
     i = 0
@@ -139,7 +138,12 @@ def plots(d, names, folder, title, group, lab):
         ax.plot(d[k]['Bl Ct'],d[k].index.astype(float), linewidth = 1, alpha = 0.5, label = lab[i])
         i = i + 1
     
-    
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=0)
+    ax.invert_yaxis()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.grid()
     ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
     plt.show()
     plt.savefig(output + '/' + title + ' ' + group + '.pdf')
@@ -165,14 +169,9 @@ def plots_api(d, names, folder, group, lab, confidence_limit = 100, api_limit = 
     fig, ax = plt.subplots(figsize = (5, 20))
     ax.set_xlabel(r'Blow Count (Blows/25cm)')
     ax.set_ylabel(r'Depth (mBGL)')
-    #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
-    y = np.arange(0, 100, 10)
-    ax.set_yticks(y)
+
     ##ax.set_xticks(x)
-    ax.invert_yaxis()
-    ax.xaxis.set_label_position('top')
-    ax.xaxis.tick_top()
-    ax.grid()
+    
 
     i = 0
     for k in names:
@@ -183,6 +182,17 @@ def plots_api(d, names, folder, group, lab, confidence_limit = 100, api_limit = 
     ax.axvline(confidence_limit, label = 'Confidence Limit', ls = '--', color = 'red')    
     ax.axvline(api_limit, label = 'API Limit', ls = '--', color = 'Blue')    
     ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
+    #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=0)
+    ax.invert_yaxis()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.grid()
+    #y = np.arange(0, 100, 10)
+    #ax.set_yticks(y)
+    
+    #ax.set_xlim(ymin=0)
     plt.show()
     plt.savefig(plot_folder + '/' + 'API ' + group + '.pdf')
     
@@ -274,7 +284,8 @@ def post_processor_gwo(input_folder, output):
         df.to_csv(output_csv + names[i] + '.csv', index=False)
         
         #reformat df for use in the plotting functions below
-        df2 = df.set_index('Depth')
+        #df2 = df.set_index('Depth')
+        df2 = df        
         df2 = df2.iloc[1:]
         df2['Bl Ct'] = df2['Bl Ct'].astype(float) / 4 #convert datatype frm string to float. divide by 4 to get /25cm value
 
@@ -283,8 +294,8 @@ def post_processor_gwo(input_folder, output):
     #generate tables for 
         path = output_tables + names[i] + '/'
         table_plotter(df2, path)
-        max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])].index[0])
-        max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'][0]
+        max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Depth'].iloc[0])
+        max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'].iloc[0]
         max_ct.iloc[i]['Names'] = names[i]
         refusal.iloc[i]['Names'] = names[i]
         if len(df2[df2['Bl Ct'] > 250].index) > 0: 
