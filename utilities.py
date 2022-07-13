@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Wed Jul 13 15:21:18 2022
+
+@author: goharshoukat
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Jul  5 12:07:05 2022
 
 @author: goharshoukat
@@ -11,6 +19,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
+import copy
 def list_search(data, search):
     #function to search and return the index for which a keyword is seen in the file. 
     
@@ -151,10 +160,12 @@ def plots(d, names, folder, title, group, lab):
 def combine_api_data(cache800, cache1200):
     #function takes in the datafiles from the two hammer type and 
     #returns the combined set for plotting further
-    mapped = cache800
-    for d in cache1200['d']:
+    mapped = copy.deepcopy(cache800)
+    i = 0 #apply enumerate later. 
+    for d in (cache1200['d']):
         mapped['d'][d] = cache1200['d'][d] 
-
+        mapped['names'].append(cache1200['names'][i])
+        i = i+1
     return mapped
 
 def plots_api(d, names, folder, group, lab, confidence_limit = 100, api_limit = 250):
@@ -293,7 +304,7 @@ def post_processor_gwo(input_folder, output):
         
     #generate tables for 
         path = output_tables + names[i] + '/'
-        table_plotter(df2, path)
+        #table_plotter(df2, path)
         max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Depth'].iloc[0])
         max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'].iloc[0]
         max_ct.iloc[i]['Names'] = names[i]
@@ -305,6 +316,99 @@ def post_processor_gwo(input_folder, output):
     max_ct.to_csv(output_csv + 'max blow count.csv')
     refusal.to_csv(output_csv + 'refusal depth.csv')
     return {'d' : d, 'names' : names}
+
+def tensile_compression_plot(cache, names, lab, option, folder, hammer):
+    #cache : {}: dict of all the data files
+    #option : str : either tensile or compressive
+    #hammer : int : 800 or 1200
+    plot_folder = folder + '/plots'
+
+    fig, ax = plt.subplots(figsize = (5, 20))
+    ax.set_ylabel(r'Depth (mBGL)')
+    if option == 'Tensile':
+        ax.set_xlabel(r'Tensile Strength (MPa)')
+        i = 0
+        for k in names:
+            ax.plot(np.abs(cache['d'][k]['Ten Str'].astype(float)),cache['d'][k]['Depth'].astype(float), linewidth = 1, alpha = 0.5, label = lab[i])
+            i = i + 1
+        
+    elif option == 'Compression':
+        ax.set_xlabel(r'Compressive Strength (MPa)')
+        i = 0
+        for k in names:
+            ax.plot(np.abs(cache['d'][k]['Com Str'].astype(float)),cache['d'][k]['Depth'].astype(float), linewidth = 1, alpha = 0.5, label = lab[i])
+            i = i + 1
+        
+        
+    ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
+        #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=0)
+    ax.invert_yaxis()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.grid()
+    #y = np.arange(0, 100, 10)
+    #ax.set_yticks(y)
+    
+    #ax.set_xlim(ymin=0)
+    plt.show()
+    plt.savefig(plot_folder + '/' + option + str(hammer)+ '.pdf')
+
+
+def plot_appendices(cache, lab, names, title, hammer, folder, confidence_limit=100, api_limit=250):
+    plot_folder = folder + '/plots'
+    fig, ax = plt.subplots(figsize = (5, 20))
+    ax.set_xlabel(r'Blow Count (Blows/25cm)')
+    ax.set_ylabel(r'Depth (mBGL)')
+    #x = np.arange(0, 100, 20) # define the x to make ti the same for all cpts
+    #y = np.arange(0, 100, 10)
+
+    #ax.set_yticks(y)
+    ##ax.set_xticks(x)
+    d = cache['d']
+    for i, n in enumerate(names):
+        ax.plot(d[n]['Bl Ct'],d[n].index.astype(float), linewidth = 1, alpha = 0.5, label = lab[i])
+
+    ax.axvline(confidence_limit, label = 'Confidence Limit', ls = '--', color = 'red')    
+    ax.axvline(api_limit, label = 'API Limit', ls = '--', color = 'Blue')    
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(0, 300)
+    ax.invert_yaxis()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.grid()
+    ax.legend(ncol = 2, loc='lower center', bbox_to_anchor=(0.5,- 0.15))
+    plt.show()
+    plt.savefig(plot_folder + '/' + title + str(hammer)+ '.pdf')
+    
+
+def appendices_processing(cache, folder, hammer):
+    filenames = list(cache['d'])
+    fig18 = [filenames[0], filenames[2], filenames[4]]
+    fig19 = [filenames[6], filenames[8], filenames[10]]
+    fig20 = [filenames[1], filenames[3], filenames[5]]
+    fig21 = [filenames[7], filenames[9], filenames[11]]
+
+    
+    gra = editedNames(fig18, 'A')
+    lab = labels(gra)  #reformat labels to the desired format
+    plot_appendices(cache, lab, fig18, 'fig18', hammer, folder)
+        
+    gra = editedNames(fig19, 'B')
+    lab = labels(gra)  #reformat labels to the desired format
+    plot_appendices(cache, lab, fig19, 'fig19', hammer, folder)
+    
+    
+    gra = editedNames(fig20, 'A')
+    lab = labels(gra)  #reformat labels to the desired format
+    plot_appendices(cache, lab, fig20, 'fig20', hammer, folder)
+        
+    gra = editedNames(fig21, 'B')
+    lab = labels(gra)  #reformat labels to the desired format
+    plot_appendices(cache, lab, fig21, 'fig21', hammer, folder)
+    
+    
 
 
 def graphs(cache800, cache1200, output, confidence_limit = 100, api_limit = 250):
@@ -340,10 +444,10 @@ def graphs(cache800, cache1200, output, confidence_limit = 100, api_limit = 250)
     api1200A = [k for k in cache1200['names'][:6] if 'API' in k]
     apiA = api800A + api1200A
     gra = editedNames(apiA, 'A')
-    lab = labels(gra)  #reformat labels to the desired format
+    lab_A = labels(gra)  #reformat labels to the desired format
     combined_d_A = combine_api_data(cache800, cache1200)
     
-    plots_api(combined_d_A['d'], apiA, output, 'A', lab, confidence_limit=confidence_limit, 
+    plots_api(combined_d_A['d'], apiA, output, 'A', lab_A, confidence_limit=confidence_limit, 
               api_limit=api_limit)
     
     
@@ -353,8 +457,39 @@ def graphs(cache800, cache1200, output, confidence_limit = 100, api_limit = 250)
     api1200B = [k for k in cache1200['names'][6:] if 'API' in k]
     apiB = api800B + api1200B
     grb = editedNames(apiB, 'B')
-    lab = labels(grb)  #reformat labels to the desired format
+    lab_B = labels(grb)  #reformat labels to the desired format
     combined_d_B = combine_api_data(cache800, cache1200)
     
-    plots_api(combined_d_B['d'], apiB, output, 'B', lab, confidence_limit=confidence_limit, 
+    plots_api(combined_d_B['d'], apiB, output, 'B', lab_B, confidence_limit=confidence_limit, 
               api_limit=api_limit)
+    
+    #graphs for tensile and compressive strengths
+    combined_800_na = [k for k in cache800['names'] if 'API' not in k]
+    gra = editedNames(non_api_800A, 'A') + editedNames(non_api_800B, 'B')
+    lab = labels(gra)  #reformat labels to the desired format 
+    tensile_compression_plot(cache800, combined_800_na, lab, 'Tensile', output, 800)
+    tensile_compression_plot(cache800, combined_800_na, lab, 'Compression', output, 800)
+
+
+    combined_1200_na = [k for k in cache1200['names'] if 'API' not in k]
+    gra = editedNames(non_api_1200A, 'A') + editedNames(non_api_1200B, 'B')
+    lab = labels(gra)  #reformat labels to the desired format 
+    tensile_compression_plot(cache1200, combined_1200_na, lab, 'Tensile', output, 1200)
+    tensile_compression_plot(cache1200, combined_1200_na, lab, 'Compression', output, 1200)
+
+
+
+#api plots
+    combine_api = combine_api_data(cache800, cache1200)
+    api_names = [k for k in combine_api['names'] if 'API' in k]
+    #api_names = apiA + apiB
+    lab = lab_A + lab_B
+    tensile_compression_plot(combine_api, api_names, lab, 'Tensile', output, 'API')
+    tensile_compression_plot(combine_api, api_names, lab, 'Compression', output, 'API')
+    
+
+# =============================================================================
+#  unnneccessary items for zawtika 
+# =============================================================================
+    appendices_processing(cache800, output, 800)
+    appendices_processing(cache1200, output, 1200)

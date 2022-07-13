@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 from glob import glob
 from utilities import table_plotter, mkdir, editedNames, labels, table_extraction, plots
 
-files = sorted(glob('S800/*.GWO'))
+files = sorted(glob('13/S-1200/*.GWO'))
 
 #replaces file extensions and folder to extract case names
 names = [names.replace(".GWO", "") for names in files]
-names = [names.replace("S800/", "") for names in names]
+names = [names.replace("13/S-1200/", "") for names in names]
 A = [n for n in names if n.split()[2]=='A']
 B = [n for n in names if n.split()[2]=='B']
 # %% read data from the text files
@@ -96,9 +96,9 @@ for i in range(len(files)):
     d[names[i]] = df2
     
 #generate tables for 
-    path = output_tables + names[i] + '/'
+    #path = output_tables + names[i] + '/'
     #table_plotter(df, path)
-    max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])].index[0])
+    max_ct.iloc[i]['Depth'] = float(df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Depth'].iloc[0])
     max_ct.iloc[i]['Max Bl Ct'] =  df2[df2['Bl Ct']==np.max(df2['Bl Ct'])]['Bl Ct'][0]
     max_ct.iloc[i]['Names'] = names[i]
     refusal.iloc[i]['Names'] = names[i]
